@@ -1,0 +1,101 @@
+---
+title: "Statistical Inference - Course Project 2"
+author: "Mark C"
+date: "Saturday, November 17, 2014"
+output: pdf_document
+---
+
+# Part 2 : Basic Inferential Data Analysis  
+  
+## Project Info
+  In the second portion of the project, we're going to analyze the ToothGrowth data in the R datasets package.Perform some exploratory data analysis and perform hypothesis testing on the data.
+  
+## Data Info
+  The response is the length of teeth in each of 10 guinea pigs at each of three dose levels of Vitamin C (0.5, 1, and 2 mg) with each of two delivery methods (orange juice or ascorbic acid).
+
+
+## 1. Load the ToothGrowth data and perform some basic exploratory data analysis     
+  
+```{r explore, echo=TRUE}
+#loading the library required
+library(ggplot2)
+
+# loading the dataset
+library(datasets)
+data(ToothGrowth)
+
+# Check how many rows in the dataset
+nrow(ToothGrowth)
+
+# Preview part of the data 
+head(ToothGrowth)
+str(ToothGrowth)
+
+# Perform some pre-processing of the data
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+
+
+```  
+  
+## 2. Provide a basic summary of the data.  
+  
+```{r summary, echo=TRUE}  
+#generate the summary statistics of the data
+summary(ToothGrowth)
+
+# split the data  between different dose levels and delivery methods
+table(ToothGrowth$dose, ToothGrowth$supp)
+
+
+ggplot(data=ToothGrowth, aes(x=as.factor(dose), y=len, fill=supp)) +
+    geom_boxplot() +
+    facet_grid(. ~ supp) +
+    xlab("Dosage in miligrams") +
+    ylab("Tooth length") +
+    guides(fill=guide_legend(title="Supplement type"))
+```  
+  
+Fromt the graph above , it shows that there is a positive correlation between the tooth length and the dosage levels for both delivery method .  The length of the tooth increases as the dosage increases. However, it can be seen that the OJ delivery method yields a greater length increate than the VC.
+  
+## 3. Use confidence intervals and hypothesis tests to compare tooth growth by supp and dose.  
+  
+# Statistical inference
+Now , we conduct the hypothesis testing to compare whether the same dosage of each supplement yields the same tooth growth length. We perform the null hypothesis test as follows: 
+
+$H_0: \mu_{OJ|0.5} = \mu_{VC_|0.5}$  
+$H_0: \mu_{OJ|1.0} = \mu_{VC_|1.0}$  
+$H_0: \mu_{OJ|2.0} = \mu_{VC_|2.0}$ 
+
+```{r}
+# We split the data up by dosages
+d0.5 <- subset(ToothGrowth, dose == 0.5)
+d1.0 <- subset(ToothGrowth, dose == 1.0)
+d2.0 <- subset(ToothGrowth, dose == 2.0)
+
+# conduct a t-test between supplements
+test0.5 <- t.test(len ~ supp, paired = FALSE, var.equal = FALSE, data = d0.5)
+test0.5$p.value; test0.5$conf[1]
+
+test1.0 <- t.test(len ~ supp, paired = FALSE, var.equal = FALSE, data = d1.0)
+test1.0$p.value; test1.0$conf[1]
+
+test2.0 <- t.test(len ~ supp, paired = FALSE, var.equal = FALSE, data = d2.0)
+test2.0$p.value; test2.0$conf[1]
+```
+
+###Observations
+
+Dosages 0.5 and 1 have  p-values of `r test0.5$p.value` and `r test1.0$p.value` respectively and is below 0.01. This shows there is a strong presumption against the null hypothesis, indicating that the difference in mean values between the supplements is significant.
+
+Dosage 1.0 has a  confidence interval between  `r test0.5$conf[1] ` - `r test0.5$conf[2]` and dosage 2.0 has a confidence interval between `r test1.0$conf[1] ` - `r test1.0$conf[2]`. 
+
+Dosage 2 has a very high p-value of `r test2.0$p.value` and a confidence interval below zero (`r test2.0$conf[1] ` - `r test2.0$conf[2]`). The p-value this high indicates that there is no presumption against the null hypothesis. This means that there is no significance between the supplemen at the dosage at this amount.
+
+## Conclusion
+
+From the analysis, it can be seen that the tooth length growth is much more effective at lower dosages (0.5 & 1) for both supplements and the effects on tooth growth wears off at dosage 2.0.
+
+## Assumptions Applied
+1)Samples obtained are unpaired, with unequal variances.
+2)Test subjects are similar (size, age, diet).
+3)No other factors other than the supplements are the factors affecting tooth growth in this case.
